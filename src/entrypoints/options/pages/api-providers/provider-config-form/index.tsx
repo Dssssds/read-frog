@@ -147,6 +147,11 @@ export function ProviderConfigForm() {
 
           <APIKeyField form={form} />
           <BaseURLField form={form} />
+          {providerType === "bedrock" && (
+            <form.AppField name="region">
+              {field => <field.InputFieldAutoSave formForSubmit={form} label={i18n.t("options.apiProviders.form.fields.region")} />}
+            </form.AppField>
+          )}
           {isTranslateProviderType && (
             <TranslateModelSelector form={form} />
           )}

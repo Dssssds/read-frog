@@ -57,9 +57,13 @@ const CUSTOM_HEADER_MAP: Partial<Record<keyof typeof CREATE_AI_MAPPER, Record<st
 }
 
 export function resolveModelId(providerModel: LLMProviderConfig["model"]) {
-  return providerModel.isCustomModel
+  const resolvedModelId = providerModel.isCustomModel
     ? providerModel.customModel?.trim()
     : providerModel.model?.trim()
+
+  return resolvedModelId
+    || providerModel.customModel?.trim()
+    || providerModel.model?.trim()
 }
 
 async function getLanguageModelById(providerId: string) {
@@ -75,6 +79,29 @@ async function getLanguageModelById(providerId: string) {
   }
 
   const customHeaders = CUSTOM_HEADER_MAP[providerConfig.provider]
+  const modelId = resolveModelId(providerConfig.model)
+
+  if (!modelId) {
+    throw new Error("Model is undefined")
+  }
+
+  if (providerConfig.provider === "bedrock") {
+    const region = providerConfig.region?.trim()
+    const baseURL = providerConfig.baseURL?.trim()
+
+    if (!region && !baseURL) {
+      throw new Error("Amazon Bedrock requires a region or Base URL")
+    }
+
+    const provider = createAmazonBedrock({
+      ...(region && { region }),
+      ...(baseURL && { baseURL }),
+      ...(providerConfig.apiKey && { apiKey: providerConfig.apiKey }),
+      ...(customHeaders && { headers: customHeaders }),
+    })
+
+    return provider(modelId)
+  }
 
   const provider = isCustomLLMProvider(providerConfig.provider)
     ? CREATE_AI_MAPPER[providerConfig.provider]({
@@ -89,12 +116,6 @@ async function getLanguageModelById(providerId: string) {
         ...(providerConfig.apiKey && { apiKey: providerConfig.apiKey }),
         ...(customHeaders && { headers: customHeaders }),
       })
-
-  const modelId = resolveModelId(providerConfig.model)
-
-  if (!modelId) {
-    throw new Error("Model is undefined")
-  }
 
   return provider.languageModel(modelId)
 }

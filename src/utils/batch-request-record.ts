@@ -4,6 +4,7 @@ import { isLLMProviderConfig } from "@/types/config/provider"
 import { db } from "@/utils/db/dexie/db"
 import { getDateFromDaysBack, numberToPercentage } from "@/utils/utils"
 import { logger } from "./logger"
+import { resolveModelId } from "./providers/model"
 
 export async function getRangeBatchRequestRecords(startDay: number, endDay?: number) {
   const startDate = getDateFromDaysBack(startDay)
@@ -26,7 +27,7 @@ export async function putBatchRequestRecord(
     return
 
   const { provider, model: providerModel } = providerConfig
-  const modelName = providerModel.isCustomModel ? providerModel.customModel : providerModel.model
+  const modelName = resolveModelId(providerModel)
 
   try {
     await db.batchRequestRecord.put({

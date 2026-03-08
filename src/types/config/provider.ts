@@ -121,6 +121,8 @@ export const baseProviderConfigSchema = z.object({
 export const baseAPIProviderConfigSchema = baseProviderConfigSchema.extend({
   apiKey: z.string().optional(),
   baseURL: z.string().optional(),
+  // Used by Bedrock; ignored by providers that don't need region-based routing.
+  region: z.string().optional(),
   temperature: z.number().min(0).optional(),
   providerOptions: z.record(z.string(), z.any()).optional(),
 })
